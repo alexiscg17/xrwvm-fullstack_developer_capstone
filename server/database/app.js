@@ -30,13 +30,10 @@ try {
   res.status(500).json({ error: 'Error fetching documents' });
 }
 
-
-// Express route to home
 app.get('/', async (req, res) => {
     res.send("Welcome to the Mongoose API")
 });
 
-// Express route to fetch all reviews
 app.get('/fetchReviews', async (req, res) => {
   try {
     const documents = await Reviews.find();
@@ -46,7 +43,6 @@ app.get('/fetchReviews', async (req, res) => {
   }
 });
 
-// Express route to fetch reviews by a particular dealer
 app.get('/fetchReviews/dealer/:id', async (req, res) => {
   try {
     const documents = await Reviews.find({dealership: req.params.id});
@@ -56,22 +52,48 @@ app.get('/fetchReviews/dealer/:id', async (req, res) => {
   }
 });
 
-// Express route to fetch all dealerships
 app.get('/fetchDealers', async (req, res) => {
-//Write your code here
+ try {
+    const documents = await Dealerships.find();
+    res.json(documents);
+  } catch (error) {
+    res.status(500).json({ error: 'Error fetching documents' });
+  }
 });
 
-// Express route to fetch Dealers by a particular state
 app.get('/fetchDealers/:state', async (req, res) => {
-//Write your code here
+  try {
+    const stateParam = req.params.state.trim().toLowerCase();
+    const dealers = await Dealerships.find({
+      state: { $regex: new RegExp(`^${stateParam}$`, 'i') }
+    });
+
+    if (dealers.length === 0) {
+      return res.status(404).json({ message: `No dealerships found in state '${req.params.state}'` });
+    }
+
+    res.json(dealers);
+  } catch (error) {
+    res.status(500).json({ error: 'Error fetching dealers by state' });
+  }
 });
 
-// Express route to fetch dealer by a particular id
 app.get('/fetchDealer/:id', async (req, res) => {
-//Write your code here
+  try {
+    const dealerId = parseInt(req.params.id);
+    const dealer = await Dealerships.findOne({ id: dealerId });
+
+    if (!dealer) {
+      return res.status(404).json({ message: `Dealer with id ${dealerId} not found` });
+    }
+
+    res.json(dealer);
+  } catch (error) {
+    res.status(500).json({ error: 'Error fetching dealer by id' });
+  }
 });
 
-//Express route to insert review
+
 app.post('/insert_review', express.raw({ type: '*/*' }), async (req, res) => {
   data = JSON.parse(req.body);
   const documents = await Reviews.find().sort( { id: -1 } )
