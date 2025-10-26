@@ -1,7 +1,5 @@
 import json
 import logging
-from datetime import datetime
-from django.contrib import messages
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.models import User
 from django.http import JsonResponse
@@ -22,7 +20,10 @@ def login_user(request):
     response_data = {"userName": username}
     if user is not None:
         login(request, user)
-        response_data = {"userName": username, "status": "Authenticated"}
+        response_data = {
+            "userName": username,
+            "status": "Authenticated"
+        }
     return JsonResponse(response_data)
 
 
@@ -56,9 +57,15 @@ def registration(request):
             email=email,
         )
         login(request, user)
-        return JsonResponse({"userName": username, "status": "Authenticated"})
+        return JsonResponse({
+            "userName": username,
+            "status": "Authenticated"
+        })
     else:
-        return JsonResponse({"userName": username, "error": "Already Registered"})
+        return JsonResponse({
+            "userName": username,
+            "error": "Already Registered"
+        })
 
 
 def get_cars(request):
@@ -66,14 +73,21 @@ def get_cars(request):
         initiate()
     car_models = CarModel.objects.select_related('car_make')
     cars = [
-        {"CarModel": car_model.name, "CarMake": car_model.car_make.name}
+        {
+            "CarModel": car_model.name,
+            "CarMake": car_model.car_make.name
+        }
         for car_model in car_models
     ]
     return JsonResponse({"CarModels": cars})
 
 
 def get_dealerships(request, state="All"):
-    endpoint = "/fetchDealers" if state == "All" else f"/fetchDealers/{state}"
+    endpoint = (
+        "/fetchDealers"
+        if state == "All"
+        else f"/fetchDealers/{state}"
+    )
     dealerships = get_request(endpoint)
     return JsonResponse({"status": 200, "dealers": dealerships})
 
@@ -82,8 +96,14 @@ def get_dealer_details(request, dealer_id):
     if dealer_id:
         endpoint = f"/fetchDealer/{dealer_id}"
         dealership = get_request(endpoint)
-        return JsonResponse({"status": 200, "dealer": dealership})
-    return JsonResponse({"status": 400, "message": "Bad Request"})
+        return JsonResponse({
+            "status": 200,
+            "dealer": dealership
+        })
+    return JsonResponse({
+        "status": 400,
+        "message": "Bad Request"
+    })
 
 
 def get_dealer_reviews(request, dealer_id):
@@ -93,18 +113,31 @@ def get_dealer_reviews(request, dealer_id):
         if reviews:
             for review_detail in reviews:
                 try:
-                    response = analyze_review_sentiments(review_detail['review'])
-                    review_detail['sentiment'] = response.get('sentiment', 'neutral')
+                    response = analyze_review_sentiments(
+                        review_detail['review']
+                    )
+                    review_detail['sentiment'] = response.get(
+                        'sentiment', 'neutral'
+                    )
                 except Exception as e:
                     logger.error(f"Error analyzing sentiment: {e}")
                     review_detail['sentiment'] = 'neutral'
-        return JsonResponse({"status": 200, "reviews": reviews})
-    return JsonResponse({"status": 400, "message": "Bad Request"})
+        return JsonResponse({
+            "status": 200,
+            "reviews": reviews
+        })
+    return JsonResponse({
+        "status": 400,
+        "message": "Bad Request"
+    })
 
 
 def add_review(request):
     if request.user.is_anonymous:
-        return JsonResponse({"status": 403, "message": "Unauthorized"})
+        return JsonResponse({
+            "status": 403,
+            "message": "Unauthorized"
+        })
 
     data = json.loads(request.body)
     try:
@@ -112,4 +145,7 @@ def add_review(request):
         return JsonResponse({"status": 200})
     except Exception as e:
         logger.error(f"Error posting review: {e}")
-        return JsonResponse({"status": 401, "message": "Error in posting review"})
+        return JsonResponse({
+            "status": 401,
+            "message": "Error in posting review"
+        })
